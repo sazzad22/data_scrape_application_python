@@ -1,0 +1,10 @@
+#!/bin/sh
+'''exec' "/run/media/joy/New Volume/project/python-projects/pythonProject/daraz_data_scrape/daraz_env/bin/python" "$0" "$@"
+' '''
+# -*- coding: utf-8 -*-
+import re
+import sys
+from selenium_async._scripts import test
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(test())

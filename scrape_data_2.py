@@ -9,42 +9,86 @@ import time
 from webdriver_manager.chrome import ChromeDriverManager
 from multiprocessing import Pool
 import asyncio
+from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import InvalidSessionIdException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import json
 
+titles = []
 # fucntion to scrape the data
-async def scrape_product(link):
+
+def scrape_product(link):
+    
+    info_dict = {}
+    info_dict['link'] = link
+    
     # set up the driver
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
     
+    
     try:
         # open the link in new tab
-        await driver.get(link)
-        driver.execute_script("window.open('about:blank','tab2');")
-        driver.switch_to.window('tab2')
+        driver.get(link)
+        # driver.execute_script("window.open('about:blank','tab2');")
+        # driver.switch_to.window('tab2')
         
         # Wait for the page to load
-        # WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//h1[@class='product-title']")))
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, "pdp-mod-product-badge-title")))
         
         # extract data from the product page
         
-    finally:    
+        # extract data from the product page
+        try:
+            product_title = driver.find_element(By.CLASS_NAME, 'pdp-mod-product-badge-title').text
+            info_dict["title"] = product_title
+        except NoSuchElementException:
+            info_dict["title"] = "Error: could not get product information"
+        
+        
+        try:
+            product_price = driver.find_element(By.CLASS_NAME, 'pdp-product-price').text
+            info_dict["price"] = product_price
+        except NoSuchElementException:
+            info_dict["price"] = None
+        
+        
+        
+    
+    
+    except TimeoutException:
+        info_dict["title"] = "Error: timed out while waiting for page to load"
+        info_dict["price"] = None
+        
+
+    except Exception as e:
+        info_dict["title"] = f"Error: {str(e)}"
+        info_dict["price"] = None
+        
+        
+            
+    finally:
+         
         # Close the new tab and switch back to the main window
-        await driver.close()
-        await driver.switch_to.window(driver.window_handles[0])
+        try:
+            driver.close()
+        except : 
+            pass
+        # driver.switch_to.window(driver.window_handles[0])
+    
+    return info_dict
 
 
-# Define the multiprocessing function
-def scrape_products_multiprocessing(links):
-    with Pool(processes=4) as pool:
-        # Run the asynchronous scraping function for each link using the multiprocessing pool
-        results = pool.map_async(asyncio.run, [scrape_product(link) for link in links])
-        pool.close()
-        pool.join()
-        return results.get()
+# function to save list of product information to JSON file
+def save_info_to_json(info):
+    # info is an array
+    with open('product_info.json', 'w') as f:
+        json.dump(info, f)
 
 
-async def main():
+def main():
+    info = []
     
     # set up driver
     options = webdriver.ChromeOptions()
@@ -91,18 +135,31 @@ async def main():
     links = []
     for product_a_tag in product_a_tags:
         links.append(product_a_tag.get_attribute('href'))
-    print(links)
+    # print(links[:3])
 
-    
+    links2 = ['https://www.daraz.com.bd/products/high-quality-green-mask_stick-40g-i248597910-s1194768693.html?scm=1007.28811.332137.0&pvid=003b04a2-5738-47e4-afa6-2df5b8febec4&clickTrackInfo=pvid%3A003b04a2-5738-47e4-afa6-2df5b8febec4%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A248597910%3B', 'https://www.daraz.com.bd/products/501-i215870969-s1164326720.html?scm=1007.28811.332137.0&pvid=003b04a2-5738-47e4-afa6-2df5b8febec4&clickTrackInfo=pvid%3A003b04a2-5738-47e4-afa6-2df5b8febec4%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A215870969%3B', 'https://www.daraz.com.bd/products/-i226735031-s1284029562.html?scm=1007.28811.332137.0&pvid=003b04a2-5738-47e4-afa6-2df5b8febec4&clickTrackInfo=pvid%3A003b04a2-5738-47e4-afa6-2df5b8febec4%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A226735031%3B']
         
     # close the browser
     driver.quit()
     
+    
+
+    
      # scrape data for every link in links using multiprocessing
-    pool = Pool(processes=4)  
-    pool.map(scrape_product, links)
-    pool.close()
-    pool.join()
+    # pool = Pool(processes=4)  
+    # pool.map(scrape_product, links2)
+    # pool.close()
+    # pool.join()
+    with Pool(processes=4) as pool:
+        # apply scrape_product_info function to each product link
+        results = pool.map(scrape_product, links[:10])
+        # iterate through results and append product information to info list
+        for result in results:
+            info.append(result)
+    
+    # save info to JSON file
+    save_info_to_json(info)
+        
     
 
 
@@ -112,3 +169,4 @@ async def main():
 if __name__ == "__main__":
     
     main()
+    print(titles,'--------------')
