@@ -1,3 +1,4 @@
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -13,6 +14,9 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import InvalidSessionIdException
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import json
+import requests
+import traceback
+
 
 titles = []
 # fucntion to scrape the data
@@ -35,9 +39,14 @@ def scrape_product(link):
         # driver.switch_to.window('tab2')
         
         # Wait for the page to load
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, "pdp-mod-product-badge-title")))
+        # wait for page to load
+        try:
+            element_present = EC.presence_of_element_located((By.CLASS_NAME, 'pdp-mod-product-badge-title'))
+            WebDriverWait(driver, 10).until(element_present)
+        except TimeoutException:
+            print("Timed out waiting for page to load")
         
-        # extract data from the product page
+        
         
         # extract data from the product page
         try:
@@ -54,6 +63,28 @@ def scrape_product(link):
             info_dict["price"] = None
         
         
+        # download product images-----------------
+        try:
+            images = driver.find_elements(By.CLASS_NAME, "pdp-mod-common-image gallery-preview-panel__image")
+            if images:
+                image_urls = []
+                for img in images:
+                    img_url = img.get_attribute("src")
+                    if img_url:
+                        image_urls.append(img_url)
+                if image_urls:
+                    info_dict["image_urls"] = image_urls
+                    # create directory to save images if it doesn't exist
+                    if not os.path.exists("product_images"):
+                        os.makedirs("product_images")
+                    # download and save images
+                    for i, img_url in enumerate(image_urls):
+                        response = requests.get(img_url)
+                        with open(f"product_images/product_{i+1}.jpg", "wb") as f:
+                            f.write(response.content)
+        except Exception as e:
+            traceback.print_exc()
+            pass
         
     
     
@@ -137,7 +168,7 @@ def main():
         links.append(product_a_tag.get_attribute('href'))
     # print(links[:3])
 
-    links2 = ['https://www.daraz.com.bd/products/high-quality-green-mask_stick-40g-i248597910-s1194768693.html?scm=1007.28811.332137.0&pvid=003b04a2-5738-47e4-afa6-2df5b8febec4&clickTrackInfo=pvid%3A003b04a2-5738-47e4-afa6-2df5b8febec4%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A248597910%3B', 'https://www.daraz.com.bd/products/501-i215870969-s1164326720.html?scm=1007.28811.332137.0&pvid=003b04a2-5738-47e4-afa6-2df5b8febec4&clickTrackInfo=pvid%3A003b04a2-5738-47e4-afa6-2df5b8febec4%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A215870969%3B', 'https://www.daraz.com.bd/products/-i226735031-s1284029562.html?scm=1007.28811.332137.0&pvid=003b04a2-5738-47e4-afa6-2df5b8febec4&clickTrackInfo=pvid%3A003b04a2-5738-47e4-afa6-2df5b8febec4%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A226735031%3B']
+    
         
     # close the browser
     driver.quit()
@@ -152,7 +183,7 @@ def main():
     # pool.join()
     with Pool(processes=4) as pool:
         # apply scrape_product_info function to each product link
-        results = pool.map(scrape_product, links[:10])
+        results = pool.map(scrape_product, links[:2])
         # iterate through results and append product information to info list
         for result in results:
             info.append(result)
