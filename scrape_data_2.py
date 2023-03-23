@@ -16,6 +16,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import json
 import requests
 import traceback
+import re
 
 
 titles = []
@@ -57,7 +58,10 @@ def scrape_product(link, src_link):
         
         
         try:
-            product_price = driver.find_element(By.CLASS_NAME, 'pdp-price pdp-price_type_normal pdp-price_color_orange pdp-price_size_xl').text
+            product_price_str = driver.find_element(By.XPATH, '//*[@id="module_product_price_1"]/div/div/span').text
+            # find the last word of the string
+            match = re.search(r'\S+$', product_price_str)
+            product_price = match.group(0)
             info_dict["price"] = product_price
         except NoSuchElementException:
             info_dict["price"] = None
@@ -98,6 +102,12 @@ def scrape_product(link, src_link):
                 os.makedirs("product_images")
             response = requests.get(img_url)
             print(response)
+            
+            # # remove previous photos, if any
+            # previous_photos = [f for f in os.listdir("product_images") ]
+            # for photo in previous_photos:
+            #     os.remove(f"product_images/{photo}")
+            
             with open(f"product_images/{product_title}.jpg", "wb") as f:
                 f.write(response.content)
                     
@@ -202,14 +212,10 @@ def main():
     
 
     
-     # scrape data for every link in links using multiprocessing
-    # pool = Pool(processes=4)  
-    # pool.map(scrape_product, links2)
-    # pool.close()
-    # pool.join()
+    
     with Pool(processes=4) as pool:
         # apply scrape_product_info function to each product link
-        results = pool.starmap(scrape_product, args_list[:2])
+        results = pool.starmap(scrape_product, args_list)
         # iterate through results and append product information to info list
         for result in results:
             info.append(result)
