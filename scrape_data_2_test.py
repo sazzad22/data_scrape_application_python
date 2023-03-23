@@ -21,7 +21,7 @@ import traceback
 titles = []
 # fucntion to scrape the data
 
-def scrape_product(link, src_link):
+def scrape_product(link):
     
     info_dict = {}
     info_dict['link'] = link
@@ -39,12 +39,12 @@ def scrape_product(link, src_link):
         # driver.switch_to.window('tab2')
         
         # Wait for the page to load
+        # wait for page to load
         try:
             element_present = EC.presence_of_element_located((By.CLASS_NAME, 'pdp-mod-product-badge-title'))
             WebDriverWait(driver, 10).until(element_present)
         except TimeoutException:
-            print("Timed out waiting for product page to load")
-            
+            print("Timed out waiting for page to load")
         
         
         
@@ -57,53 +57,36 @@ def scrape_product(link, src_link):
         
         
         try:
-            product_price = driver.find_element(By.CLASS_NAME, 'pdp-price pdp-price_type_normal pdp-price_color_orange pdp-price_size_xl').text
+            product_price = driver.find_element(By.CLASS_NAME, 'pdp-product-price').text
             info_dict["price"] = product_price
         except NoSuchElementException:
             info_dict["price"] = None
         
-        # //*[@id="J_breadcrumb"]/li[2]/span/a/span
         
-        # //*[@id="J_breadcrumb"]/li[2]/span/a/span
-        
-        try:
-            product_catagory = driver.find_element(By.XPATH, '//*[@id="J_breadcrumb"]/li[2]/span/a/span').text
-            info_dict["catagory"] = product_catagory
-        except NoSuchElementException:
-            info_dict["catagory"] = None
-        
-        
-        """
-        
-        <div class="gallery-preview-panel__content"><img class="pdp-mod-common-image gallery-preview-panel__image" alt="Fake Camera Lens Sticker for iPhone X,Xs,Xs max Change to iPhone 11 Pro Max" src="https://static-01.daraz.com.bd/p/3dddebef926320ccf8fed4c0c206337c.jpg_720x720.jpg_.webp"></div>
-        
-        """
-        
-        # Wait for the image to load completely
-        try:
-            wait = WebDriverWait(driver, 10)
-            wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'gallery-preview-panel__content')))
-        except:
-            print("could not find the image div")
-        
-        
-        # //*[@id="module_item_gallery_1"]/div/div[1]/div/img
         # download product images-----------------
         try:
-            image = driver.find_element(By.XPATH,'.//*[@id="module_item_gallery_1"]/div/div[1]/div/img')
-            print(image,"images----------")
-            img_url = image.get_attribute('src')
-            # create directory to save images if it doesn't exist
-            if not os.path.exists("product_images"):
-                os.makedirs("product_images")
-            response = requests.get(img_url)
-            print(response)
-            with open(f"product_images/{product_title}.jpg", "wb") as f:
-                f.write(response.content)
-                    
+            # images = driver.find_elements(By.CLASS_NAME, "pdp-mod-common-image gallery-preview-panel__image")
+            images =["https://static-01.daraz.com.bd/p/2080e248b9aabd0ea394d55d1920da4a.jpg_720x720.jpg_.webp","https://static-01.daraz.com.bd/p/2080e248b9aabd0ea394d55d1920da4a.jpg_720x720.jpg_.webp"]
+            if images or True:
+                image_urls = []
+                for img in images:
+                    # img_url = img.get_attribute("src")
+                    img_url = True
+                    if img_url:
+                        image_urls.append(img)
+                if image_urls:
+                    info_dict["image_urls"] = image_urls
+                    # create directory to save images if it doesn't exist
+                    if not os.path.exists("product_images"):
+                        os.makedirs("product_images")
+                    # download and save images
+                    for i, img_url in enumerate(image_urls):
+                        response = requests.get(img_url)
+                        with open(f"product_images/product_{i+1}.jpg", "wb") as f:
+                            f.write(response.content)
         except Exception as e:
-            print(e, "error downloading photo")
-            
+            print(e)
+            pass
         
     
     
@@ -115,7 +98,7 @@ def scrape_product(link, src_link):
     except Exception as e:
         info_dict["title"] = f"Error: {str(e)}"
         info_dict["price"] = None
-        info_dict["image"] = f"Error: {str(e)}"
+        
         
             
     finally:
@@ -158,7 +141,7 @@ def main():
         element_present = EC.presence_of_element_located((By.CLASS_NAME, 'card-jfy-li-content'))
         WebDriverWait(driver, 10).until(element_present)
     except TimeoutException:
-        print("Timed out waiting for home page to load")
+        print("Timed out waiting for page to load")
 
     # keep scrolling until there are no more products to load
     while True:
@@ -181,18 +164,10 @@ def main():
 
     # now that all products have loaded, you can extract the data you need
     product_a_tags = driver.find_elements(By.CLASS_NAME, "card-jfy-li-content")
-    product_img_tags = driver.find_elements(By.CLASS_NAME, "image")
     
     links = []
     for product_a_tag in product_a_tags:
         links.append(product_a_tag.get_attribute('href'))
-    product_img_src_links = []
-    for product_img_tag in product_img_tags:
-        product_img_src_links.append(product_img_tag.get_attribute('src'))
-    
-    args_list = [(link,product_img_src_links[i]) for i, link in enumerate(links)]
-    
-    # print(links[:3])
 
     
         
@@ -209,7 +184,7 @@ def main():
     # pool.join()
     with Pool(processes=4) as pool:
         # apply scrape_product_info function to each product link
-        results = pool.starmap(scrape_product, args_list[:2])
+        results = pool.map(scrape_product, links[:2])
         # iterate through results and append product information to info list
         for result in results:
             info.append(result)
