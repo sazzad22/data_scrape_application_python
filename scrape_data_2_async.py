@@ -1,67 +1,117 @@
 import asyncio
 import json
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import re
+
 from pyppeteer import launch
 
-async def scrape_product_links():
-    browser = await launch()
+async def scrape_product(link,browser):
+    print(' page')
+    
     page = await browser.newPage()
+    print('created page')
 
     # navigate to the dynamic website and scroll to the bottom
-    await page.goto('https://example.com')
-    await page.waitForSelector('.product')
-    num_products = await page.evaluate('() => document.querySelectorAll(".product").length')
-    while True:
-        await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-        await page.waitForTimeout(2000)  # wait for products to load
-        new_num_products = await page.evaluate('() => document.querySelectorAll(".product").length')
-        if new_num_products == num_products:
-            break
-        num_products = new_num_products
+    await page.goto(link)
+    print('goto link')
+    
 
-    # extract product links
-    links = []
-    for product in await page.querySelectorAll('.product'):
-        link = await product.querySelectorEval('a', '(element) => element.href')
-        links.append(link)
-
+    # extract products info
+    
     # close browser and return links
     await browser.close()
+    print('browser closed')
+    
+    return {link}
+
+async def scrape_product_links():
+    options = webdriver.ChromeOptions()
+    options.add_argument("--start-maximized")
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+    
+        
+    driver.get("https://www.daraz.com.bd/#")
+    
+    # slow scroll
+    SCROLL_PAUSE_TIME = 0.5
+    
+    
+    
+    
+    # scroll
+    while True:
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        # scroll to the bottom
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        
+        # wait to load page
+        await asyncio.sleep(SCROLL_PAUSE_TIME)
+        # calc new scroll height and compare with the last scroll height. if there is no more content loaded then they would be same and loop breaks
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
+    
+    # wait for page to load
+   
+    
+    # get all product links
+    # now that all products have loaded, you can extract the data you need
+    product_a_tags = driver.find_elements(By.CLASS_NAME, "card-jfy-li-content")
+    
+    links = []
+    for product_a_tag in product_a_tags:
+        links.append(product_a_tag.get_attribute('href'))
+    
+    
+    # close driver and return links
+    driver.quit()
+    
     return links
 
-async def scrape_product(link):
-    browser = await launch()
-    page = await browser.newPage()
-
-    # navigate to product link and wait for it to load
-    await page.goto(link)
-    await page.waitForSelector('.product-title')
-
-    # extract product title and price
-    title = await page.querySelectorEval('.product-title', '(element) => element.textContent')
-    price = await page.querySelectorEval('.product-price', '(element) => element.textContent')
-
-    # close browser and return product info
-    await browser.close()
-    return {"title": title, "price": price}
+def save_info_to_json(product_infos):
+    with open("async_product_info.json", "w") as f:
+        json.dump(product_infos, f)
 
 async def main():
-    # scrape product links
     links = await scrape_product_links()
-
-    # scrape product info concurrently
+    
+    # set up the driver
+    # options = webdriver.ChromeOptions()
+    # options.add_argument("--start-maximized")
+    # driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+    
+    # set up chromium driver
+    try:
+        browser = await launch()
+        print('browser created')
+    except Exception as e:
+        print(e)
+    
+    
+    # scrape product concurrently
     tasks = []
-    for link in links:
-        tasks.append(asyncio.ensure_future(scrape_product(link)))
-
+    for link in links[:3]:
+        tasks.append(asyncio.create_task(scrape_product(link,browser)))
+    
     # wait for all tasks to complete
-    info = []
-    for task in asyncio.as_completed(tasks):
-        result = await task
-        info.append(result)
+    product_infos = await asyncio.gather(*tasks)
+    
+    
+    
+    # save info to JSON 
+    save_info_to_json(product_infos)
+    
+    
 
-    # save product info to json file
-    with open('product_info.json', 'w') as f:
-        json.dump(info, f)
-
-if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(main())
+if __name__ == "__main__":
+    asyncio.run(main())
+    

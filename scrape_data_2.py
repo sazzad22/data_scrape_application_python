@@ -19,9 +19,6 @@ import traceback
 import re
 
 
-titles = []
-# fucntion to scrape the data
-
 def scrape_product(link, src_link):
     
     info_dict = {}
@@ -66,22 +63,12 @@ def scrape_product(link, src_link):
         except NoSuchElementException:
             info_dict["price"] = None
         
-        # //*[@id="J_breadcrumb"]/li[2]/span/a/span
-        
-        # //*[@id="J_breadcrumb"]/li[2]/span/a/span
-        
         try:
             product_catagory = driver.find_element(By.XPATH, '//*[@id="J_breadcrumb"]/li[2]/span/a/span').text
             info_dict["catagory"] = product_catagory
         except NoSuchElementException:
             info_dict["catagory"] = None
         
-        
-        """
-        
-        <div class="gallery-preview-panel__content"><img class="pdp-mod-common-image gallery-preview-panel__image" alt="Fake Camera Lens Sticker for iPhone X,Xs,Xs max Change to iPhone 11 Pro Max" src="https://static-01.daraz.com.bd/p/3dddebef926320ccf8fed4c0c206337c.jpg_720x720.jpg_.webp"></div>
-        
-        """
         
         # Wait for the image to load completely
         try:
@@ -91,7 +78,6 @@ def scrape_product(link, src_link):
             print("could not find the image div")
         
         
-        # //*[@id="module_item_gallery_1"]/div/div[1]/div/img
         # download product images-----------------
         try:
             image = driver.find_element(By.XPATH,'.//*[@id="module_item_gallery_1"]/div/div[1]/div/img')
@@ -103,10 +89,6 @@ def scrape_product(link, src_link):
             response = requests.get(img_url)
             print(response)
             
-            # # remove previous photos, if any
-            # previous_photos = [f for f in os.listdir("product_images") ]
-            # for photo in previous_photos:
-            #     os.remove(f"product_images/{photo}")
             
             with open(f"product_images/{product_title}.jpg", "wb") as f:
                 f.write(response.content)
