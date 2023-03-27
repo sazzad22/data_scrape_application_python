@@ -1,1 +1,38 @@
-[]
+[
+    {
+        "link": "https://www.daraz.com.bd/products/-i245487784-s1189423988.html?scm=1007.28811.331409.0&pvid=20807076-17a2-462d-a349-36a2f32130ae&clickTrackInfo=pvid%3A20807076-17a2-462d-a349-36a2f32130ae%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A245487784%3B",
+        "title": "Error: could not get product information",
+        "price": null,
+        "catagory": null
+    },
+    {
+        "link": "https://www.daraz.com.bd/products/-i154422312-s1083522474.html?scm=1007.28811.331409.0&pvid=20807076-17a2-462d-a349-36a2f32130ae&clickTrackInfo=pvid%3A20807076-17a2-462d-a349-36a2f32130ae%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A154422312%3B",
+        "title": "Front buckle Closure Wire Free Women Bra Padded Lingerie Bralette Gather Push Up Seamless Soft Bra Underwear Bras",
+        "price": "186",
+        "catagory": "Women"
+    },
+    {
+        "link": "https://www.daraz.com.bd/products/-i282855349-s1272661925.html?scm=1007.28811.331409.0&pvid=20807076-17a2-462d-a349-36a2f32130ae&clickTrackInfo=pvid%3A20807076-17a2-462d-a349-36a2f32130ae%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A282855349%3B",
+        "title": "Three piece unstiched indian weightless Georgette,suitable, stylish and comfortable jorjet kamiz for women[kameez+orna+sloar]",
+        "price": "390",
+        "catagory": "Women"
+    },
+    {
+        "link": "https://www.daraz.com.bd/products/-i260578532-s1220241796.html?scm=1007.28811.331409.0&pvid=20807076-17a2-462d-a349-36a2f32130ae&clickTrackInfo=pvid%3A20807076-17a2-462d-a349-36a2f32130ae%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A260578532%3B",
+        "title": "Sunglass Brooch Hijab Safety Pin for Girls and Women's",
+        "price": "86",
+        "catagory": "Jewellery"
+    },
+    {
+        "link": "https://www.daraz.com.bd/products/fingerprint-induction-usb-lighter-charging-windproof-cigarette-lighter-i223331476-s1169412690.html?scm=1007.28811.331409.0&pvid=20807076-17a2-462d-a349-36a2f32130ae&clickTrackInfo=pvid%3A20807076-17a2-462d-a349-36a2f32130ae%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A223331476%3B",
+        "title": "New Hand Printed Gorgeous Couple Set Half Silk Saree And Dhupian Cotton Panjabi",
+        "price": "1,093",
+        "catagory": "Men"
+    },
+    {
+        "link": "https://www.daraz.com.bd/products/-i299187383-s1354297232.html?scm=1007.28811.331409.0&pvid=20807076-17a2-462d-a349-36a2f32130ae&clickTrackInfo=pvid%3A20807076-17a2-462d-a349-36a2f32130ae%3Bchannel_id%3A0000%3Bmt%3Ahot%3Bitem_id%3A299187383%3B",
+        "title": "Fingerprint Induction Usb Lighter Charging Windproof Cigarette Lighter",
+        "price": "270",
+        "catagory": "Automotive"
+    }
+]
